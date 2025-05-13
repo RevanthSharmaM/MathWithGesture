@@ -8,7 +8,7 @@ import streamlit as st
  
  
 st.set_page_config(layout="wide")
-st.image('MathGestures.png')
+st.image("MathGestures.png")
  
 col1, col2 = st.columns([3,2])
 with col1:
@@ -20,17 +20,17 @@ with col2:
     output_text_area = st.subheader("")
  
  
-genai.configure(api_key="AIzaSyAu7w2tMO4kIAiB-RDMh8vywmF8OqBjpQk")
+genai.configure(api_key="AIzaSyCP7PW3w73b6CdlzUSFgdDeN1Osa6fpp8g")
 model = genai.GenerativeModel('gemini-1.5-flash')
  
 # Initialize the webcam to capture video
 # The '2' indicates the third camera connected to your computer; '0' would usually refer to the built-in camera
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 cap.set(3,1280)
 cap.set(4,720)
  
 # Initialize the HandDetector class with the given parameters
-detector = HandDetector(staticMode=False, maxHands=1, modelComplexity=1, detectionCon=0.7, minTrackCon=0.5)
+detector = HandDetector(staticMode=False, maxHands=1, modelComplexity=1, detectionCon=0.5, minTrackCon=0.5)
  
  
 def getHandInfo(img):
@@ -46,7 +46,7 @@ def getHandInfo(img):
         lmList = hand["lmList"]  # List of 21 landmarks for the first hand
         # Count the number of fingers up for the first hand
         fingers = detector.fingersUp(hand)
-        print(fingers)
+        # print(fingers)
         return fingers, lmList
     else:
         return None
@@ -57,14 +57,14 @@ def draw(info,prev_pos,canvas):
     if fingers == [0, 1, 0, 0, 0]:
         current_pos = lmList[8][0:2]
         if prev_pos is None: prev_pos = current_pos
-        cv2.line(canvas,current_pos,prev_pos,(255,0,255),10)
+        cv2.line(canvas,current_pos,prev_pos,(255,0,255),15)
     elif fingers == [1, 0, 0, 0, 0]:
         canvas = np.zeros_like(img)
  
     return current_pos, canvas
  
 def sendToAI(model,canvas,fingers):
-    if fingers == [1,1,1,1,0]:
+    if fingers == [0,0,1,1,1]:
         pil_image = Image.fromarray(canvas)
         response = model.generate_content(["Solve this math problem", pil_image])
         return response.text
@@ -79,6 +79,11 @@ while True:
     # Capture each frame from the webcam
     # 'success' will be True if the frame is successfully captured, 'img' will contain the frame
     success, img = cap.read()
+
+    if not success or img is None:
+        print("Failed to grab frame")
+        continue
+
     img = cv2.flip(img, 1)
  
     if canvas is None:
